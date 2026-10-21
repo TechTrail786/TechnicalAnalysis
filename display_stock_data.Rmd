@@ -1,0 +1,75 @@
+---
+title: "Technical Analysis - Preliminary Stage"
+author: "Safiya Muhammad"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, fig.width = 8, fig.height = 4)
+```
+
+# Purpose
+
+This document loads the stocks listed in `portfolio.txt`, computes basic statistics
+(moving average, mean, mode, median, standard deviation) and displays the data
+and charts. The functions live in `stock_functions.R` and `stock_display.R`.
+
+# Setup
+
+```{r packages}
+# install_missing_packages() installs quantmod, TTR and ggplot2 if needed
+source("stock_functions.R")
+install_missing_packages()
+source("stock_display.R")
+```
+
+# Portfolio
+
+```{r portfolio}
+read_portfolio("portfolio.txt")
+```
+
+# Load the data
+
+```{r load}
+stocks <- load_stock_data("portfolio.txt", from = "2024-01-01")
+sapply(stocks, nrow)
+```
+
+# Display the data
+
+```{r display, results='markup'}
+display_all_stocks(stocks, n = 5)
+```
+
+# Statistics
+
+Statistics are calculated on the daily **Close** price with a 20-day simple moving average.
+
+```{r stats}
+results <- calculate_all_statistics(stocks, ma_window = 20)
+knitr::kable(results$table, digits = 2, caption = "Summary statistics by stock")
+```
+
+# Visualizations
+
+```{r ma-plots}
+for (s in names(stocks)) {
+  print(plot_price_with_ma(results$by_stock[[s]]$moving_average, s, ma_window = 20))
+}
+```
+
+```{r volume-plots}
+for (s in names(stocks)) print(plot_volume(stocks[[s]], s))
+```
+
+```{r comparison}
+plot_normalised_comparison(stocks)
+plot_statistics_comparison(results$table)
+```
+
+# Notes
+
+- Data comes from Yahoo Finance through `quantmod::getSymbols()` and needs an internet connection.
+- The mode of a continuous price series is often not meaningful because values rarely repeat; prices are rounded to 2 decimals before the mode is taken.
